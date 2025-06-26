@@ -43,6 +43,7 @@ import com.example.comp1786_su25.components.ClassTypeDropdown
 import com.example.comp1786_su25.components.WheelDateTimePickerDialog
 import com.example.comp1786_su25.controllers.classFirebaseRepository
 import com.example.comp1786_su25.dataClasses.classModel
+import com.google.android.play.core.integrity.v
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +52,7 @@ fun UpdateClassScreen(
     navController: NavController,
     classId: String? = null
 ) {
+    var class_name by remember { mutableStateOf("") }
     var day_of_week by remember { mutableStateOf("") }
     var time_of_course by remember { mutableStateOf("") }
     var capacity by remember { mutableStateOf("") }
@@ -73,6 +75,7 @@ fun UpdateClassScreen(
                 if (classData != null) {
                     // Set values from the database
                     id = classData.id ?: ""
+                    class_name = classData.class_name
                     day_of_week = classData.day_of_week
                     time_of_course = classData.time_of_course
                     capacity = classData.capacity
@@ -90,7 +93,6 @@ fun UpdateClassScreen(
     WheelDateTimePickerDialog(
         showDatePicker = showDatePicker,
         onDateSelected = { date ->
-            selectedDate = date
             day_of_week = date // Update the day_of_week field with the selected date
         },
         onDismiss = {
@@ -120,6 +122,14 @@ fun UpdateClassScreen(
                 .padding(horizontal = 14.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            OutlinedTextField(
+                value = class_name,
+                onValueChange = { class_name = it },
+                label = { Text("Class Name") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+            Spacer(Modifier.height(12.dp))
             Row {
                 OutlinedTextField(
                     value = day_of_week,

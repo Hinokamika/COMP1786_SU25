@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.comp1786_su25.dataClasses.classModel
 import androidx.navigation.NavController
+import com.example.comp1786_su25.components.DetailItem
+import com.example.comp1786_su25.components.DetailSection
 import com.example.comp1786_su25.controllers.classFirebaseRepository
 
 @Composable
@@ -41,13 +43,21 @@ fun ClassDetailsDialog(classData: classModel, onDismiss: () -> Unit, navControll
             ) {
                 // Header
                 Text(
-                    text = classData.type_of_class,
+                    text = classData.class_name,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
+
+                DetailSection(title = "Class Type", content = {
+                    DetailItem(
+                        label = "class type",
+                        value = classData.type_of_class,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                })
 
                 // Class details in sections
                 DetailSection(title = "Schedule", content = {
@@ -124,35 +134,3 @@ fun ClassDetailsDialog(classData: classModel, onDismiss: () -> Unit, navControll
     }
 }
 
-@Composable
-private fun DetailSection(title: String, content: @Composable () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        content()
-    }
-}
-
-@Composable
-private fun DetailItem(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(vertical = 4.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium
-        )
-    }
-}

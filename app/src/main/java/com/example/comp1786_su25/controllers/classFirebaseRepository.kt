@@ -29,6 +29,23 @@ object classFirebaseRepository {
         }
     }
 
+    fun getClassesByTeacherId(teacherId: String, callback: (List<classModel>) -> Unit) {
+        println("DEBUG: Querying Firebase with teacherId: $teacherId")
+
+        // Using orderByChild requires an index in Firebase rules
+        // Temporary workaround: Get all classes and filter client-side
+        db.get().addOnSuccessListener { snapshot ->
+            val allClasses = snapshot.children.mapNotNull { it.getValue(classModel::class.java) }
+            // Filter classes by teacher ID on the client side
+            val filteredClasses = allClasses.filter { it.teacher == teacherId }
+            println("DEBUG: Firebase returned ${filteredClasses.size} classes after client-side filtering")
+            callback(filteredClasses)
+        }.addOnFailureListener { error ->
+            println("DEBUG: Firebase query failed: ${error.message}")
+            callback(emptyList())
+        }
+    }
+
     fun updateClass(classModel: classModel) {
         classModel.id?.let { id ->
             db.child(id).setValue(classModel)

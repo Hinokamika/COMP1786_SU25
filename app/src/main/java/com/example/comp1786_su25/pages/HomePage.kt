@@ -83,7 +83,7 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController, authVi
                     ClassPage(modifier, navController)
                 }
                 composable("teacher") {
-                    TeacherPage()
+                    TeacherPage(modifier, navController)
                 }
                 composable("user") {
                     UserPage()

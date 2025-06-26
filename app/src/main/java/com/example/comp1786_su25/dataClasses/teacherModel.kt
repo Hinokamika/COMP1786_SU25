@@ -7,4 +7,5 @@ data class teacherModel(
     val phone: String = "",
     val age : String = "",
     val specialization: String = "",
+    val classList: List<String> = emptyList()
 )

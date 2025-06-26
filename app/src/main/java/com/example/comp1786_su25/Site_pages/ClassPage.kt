@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.comp1786_su25.controllers.classFirebaseRepository
+import com.example.comp1786_su25.controllers.teacherFirebaseRepository
 import com.example.comp1786_su25.dataClasses.classModel
 import com.example.comp1786_su25.functionPages.Class.ClassDetailsDialog
 
@@ -48,11 +49,21 @@ fun ClassPage(modifier: Modifier = Modifier, navController: NavController) {
     var classes by remember { mutableStateOf<List<classModel>>(emptyList()) }
     // State for search query
     var searchQuery by remember { mutableStateOf("") }
+    var teacherNames by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
     // Fetch classes from Firebase when the composable is first displayed
     LaunchedEffect(key1 = true) {
         classFirebaseRepository.getClasses { fetchedClasses ->
             classes = fetchedClasses
+            // Fetch teacher names for all unique teacher IDs in the class list
+            val uniqueTeacherIds = fetchedClasses.map { it.teacher }.toSet()
+            uniqueTeacherIds.forEach { teacherId ->
+                teacherFirebaseRepository.getTeacherById(teacherId) { teacher ->
+                    teacher?.let {
+                        teacherNames = teacherNames + (teacherId to it.name)
+                    }
+                }
+            }
         }
     }
 
@@ -62,7 +73,7 @@ fun ClassPage(modifier: Modifier = Modifier, navController: NavController) {
     } else {
         classes.filter { classData ->
             classData.type_of_class.contains(searchQuery, ignoreCase = true) ||
-            classData.teacher.contains(searchQuery, ignoreCase = true) ||
+            (teacherNames[classData.teacher]?.contains(searchQuery, ignoreCase = true) == true) ||
             classData.day_of_week.contains(searchQuery, ignoreCase = true)
         }
     }
@@ -161,7 +172,7 @@ fun ClassPage(modifier: Modifier = Modifier, navController: NavController) {
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(filteredClasses) { classData ->
-                            ClassCard(classData = classData, navController = navController)
+                            ClassCard(classData = classData, navController = navController, teacherNames = teacherNames)
                         }
                     }
                 }
@@ -171,7 +182,7 @@ fun ClassPage(modifier: Modifier = Modifier, navController: NavController) {
 }
 
 @Composable
-fun ClassCard(classData: classModel, navController: NavController) {
+fun ClassCard(classData: classModel, navController: NavController, teacherNames: Map<String, String>) {
     // Add state to control dialog visibility
     var showDetailsDialog by remember { mutableStateOf(false) }
 
@@ -202,7 +213,7 @@ fun ClassCard(classData: classModel, navController: NavController) {
                 .fillMaxWidth()
         ) {
             Text(
-                text = classData.type_of_class,
+                text = classData.class_name,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -274,21 +285,37 @@ fun ClassCard(classData: classModel, navController: NavController) {
                 }
             }
 
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp)
+                    .padding(top = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "Teacher",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Text(
-                    text = classData.teacher,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Teacher",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = teacherNames[classData.teacher] ?: classData.teacher,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Type of Class",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = classData.type_of_class,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
 
             Button(

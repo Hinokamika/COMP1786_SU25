@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.comp1786_su25.components.ClassTypeDropdown
+import com.example.comp1786_su25.components.TeacherDropdown
 import com.example.comp1786_su25.components.WheelDateTimePickerDialog
 import com.example.comp1786_su25.controllers.classFirebaseRepository
 import com.example.comp1786_su25.dataClasses.classModel
@@ -46,6 +47,7 @@ import com.example.comp1786_su25.dataClasses.classModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) {
+    var class_name by remember { mutableStateOf("") }
     var day_of_week by remember { mutableStateOf("") }
     var time_of_course by remember { mutableStateOf("") }
     var capacity by remember { mutableStateOf("") }
@@ -58,13 +60,11 @@ fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) 
 
     // State for date picker
     var showDatePicker by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf("") }
 
     // Show date picker dialog when state is true
     WheelDateTimePickerDialog(
         showDatePicker = showDatePicker,
         onDateSelected = { date ->
-            selectedDate = date
             day_of_week = date // Update the day_of_week field with the selected date
         },
         onDismiss = {
@@ -94,6 +94,16 @@ fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) 
                 .padding(horizontal = 14.dp, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            OutlinedTextField(
+                value = class_name,
+                onValueChange = { class_name = it },
+                label = { Text("Class Name") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            Spacer(Modifier.height(12.dp))
+
             Row {
                 OutlinedTextField(
                     value = day_of_week,
@@ -162,9 +172,9 @@ fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) 
 
             Spacer(Modifier.height(12.dp))
 
-            ClassTypeDropdown(
-                selectedType = type_of_class,
-                onTypeSelected = { type_of_class = it },
+            TeacherDropdown(
+                selectedType = teacher,
+                onTypeSelected = { teacher = it },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -197,7 +207,7 @@ fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) 
 
             Button(
                 onClick = {
-                    classFirebaseRepository.addClass(classModel("", day_of_week, time_of_course, capacity, duration, price_per_class, type_of_class, description, teacher))
+                    classFirebaseRepository.addClass(classModel("",class_name, day_of_week, time_of_course, capacity, duration, price_per_class, type_of_class, description, teacher))
                     navController.popBackStack()
                     Toast.makeText(context, "Class added successfully", Toast.LENGTH_SHORT).show()
                 },
