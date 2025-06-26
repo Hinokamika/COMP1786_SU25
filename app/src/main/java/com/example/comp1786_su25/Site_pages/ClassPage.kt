@@ -1,10 +1,8 @@
 package com.example.comp1786_su25.Site_pages
 
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,19 +12,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.Icons.Filled
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,18 +34,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.comp1786_su25.controllers.classFirebaseRepository
 import com.example.comp1786_su25.dataClasses.classModel
+import com.example.comp1786_su25.functionPages.Class.ClassDetailsDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClassPage(modifier: Modifier = Modifier, navController: NavController) {
     // State to hold the list of classes
     var classes by remember { mutableStateOf<List<classModel>>(emptyList()) }
+    // State for search query
+    var searchQuery by remember { mutableStateOf("") }
 
     // Fetch classes from Firebase when the composable is first displayed
     LaunchedEffect(key1 = true) {
@@ -54,61 +56,144 @@ fun ClassPage(modifier: Modifier = Modifier, navController: NavController) {
         }
     }
 
+    // Filter classes based on search query
+    val filteredClasses = if (searchQuery.isEmpty()) {
+        classes
+    } else {
+        classes.filter { classData ->
+            classData.type_of_class.contains(searchQuery, ignoreCase = true) ||
+            classData.teacher.contains(searchQuery, ignoreCase = true) ||
+            classData.day_of_week.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "My Classes",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+            )
+        },
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                navController.navigate("addclass")
-            }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Class")
+            FloatingActionButton(
+                onClick = { navController.navigate("addclass") },
+                containerColor = MaterialTheme.colorScheme.primary,
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Add Class",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
             }
         }
     ) { padding ->
         Surface(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(padding),
+            color = MaterialTheme.colorScheme.background
         ) {
-                // Display CardContent after onboarding
-                Column(
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+            ) {
+                // Search TextField
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("Search classes") },
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.White)
-                ) {
-                    Text(
-                        text = "My Classes",
-                        style = MaterialTheme.typography.headlineLarge,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
-                    )
-
-                    // Display classes from Firebase
-                    if (classes.isEmpty()) {
-                        Text(
-                            text = "No classes found. Add a class using the + button.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(16.dp)
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = MaterialTheme.colorScheme.primary
                         )
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
-                        ) {
-                            items(classes) { classData ->
-                                ClassCard(classData = classData, navController = navController)
-                            }
+                    },
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.medium
+                )
+
+                // Display classes from Firebase
+                if (filteredClasses.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = if (classes.isEmpty())
+                                "No classes found"
+                            else
+                                "No classes match your search",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        if (classes.isEmpty()) {
+                            Text(
+                                text = "Add a class using the + button",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(filteredClasses) { classData ->
+                            ClassCard(classData = classData, navController = navController)
                         }
                     }
                 }
             }
         }
     }
+}
 
 @Composable
 fun ClassCard(classData: classModel, navController: NavController) {
+    // Add state to control dialog visibility
+    var showDetailsDialog by remember { mutableStateOf(false) }
+
+    // Show dialog if state is true
+    if (showDetailsDialog) {
+        ClassDetailsDialog(
+            classData = classData,
+            onDismiss = { showDetailsDialog = false },
+            navController = navController
+        )
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -118,27 +203,99 @@ fun ClassCard(classData: classModel, navController: NavController) {
         ) {
             Text(
                 text = classData.type_of_class,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
             )
-            Text(
-                text = "Day: ${classData.day_of_week}, Time: ${classData.time_of_course}",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-            Text(
-                text = "Duration: ${classData.duration}, Price: ${classData.price_per_class}",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-            Text(
-                text = "Teacher: ${classData.teacher}",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Day",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = classData.day_of_week,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Time",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = classData.time_of_course,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Duration",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = classData.duration,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Price",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = classData.price_per_class,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            ) {
+                Text(
+                    text = "Teacher",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = classData.teacher,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
             Button(
-                onClick = { /* TODO: Navigate to class details */ },
-                modifier = Modifier.padding(top = 16.dp)
+                onClick = { showDetailsDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
             ) {
                 Text("View Details")
             }

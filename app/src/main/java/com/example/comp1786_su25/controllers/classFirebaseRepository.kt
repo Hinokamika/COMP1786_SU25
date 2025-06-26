@@ -19,4 +19,23 @@ object classFirebaseRepository {
             callback(emptyList())
         }
     }
+
+    fun getClassById(classId: String, callback: (classModel?) -> Unit) {
+        db.child(classId).get().addOnSuccessListener { snapshot ->
+            val classData = snapshot.getValue(classModel::class.java)
+            callback(classData)
+        }.addOnFailureListener {
+            callback(null)
+        }
+    }
+
+    fun updateClass(classModel: classModel) {
+        classModel.id?.let { id ->
+            db.child(id).setValue(classModel)
+        }
+    }
+
+    fun deleteClass(classId: String) {
+        db.child(classId).removeValue()
+    }
 }

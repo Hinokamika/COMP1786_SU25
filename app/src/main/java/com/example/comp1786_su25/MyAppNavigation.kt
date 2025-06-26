@@ -5,7 +5,10 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.comp1786_su25.functionPages.AddClassScreen
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
+import com.example.comp1786_su25.functionPages.Class.AddClassScreen
+import com.example.comp1786_su25.functionPages.Class.UpdateClassScreen
 import com.example.comp1786_su25.pages.HomePage
 import com.example.comp1786_su25.pages.IntroPage
 import com.example.comp1786_su25.pages.LoginPage
@@ -28,8 +31,17 @@ fun MyAppNavigation(modifier: Modifier = Modifier, authViewModel: AuthViewModel)
         composable("home") {
             HomePage(modifier, navController, authViewModel)
         }
-        composable ("addclass") {
-             AddClassScreen(modifier ,navController) // Uncomment when AddClassScreen is implemented
+        composable("addclass") {
+            AddClassScreen(modifier, navController)
+        }
+        composable(
+            route = "updateclass/{classId}",
+            arguments = listOf(
+                navArgument("classId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val classId = backStackEntry.arguments?.getString("classId")
+            UpdateClassScreen(modifier, navController, classId)
         }
     }
 }

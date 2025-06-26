@@ -1,6 +1,5 @@
-package com.example.comp1786_su25.functionPages
+package com.example.comp1786_su25.functionPages.Class
 
-import android.widget.Spinner
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -14,25 +13,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,16 +40,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.comp1786_su25.components.ClassTypeDropdown
-import com.example.comp1786_su25.components.CustomDropdownMenu
 import com.example.comp1786_su25.components.WheelDateTimePickerDialog
 import com.example.comp1786_su25.controllers.classFirebaseRepository
 import com.example.comp1786_su25.dataClasses.classModel
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.methods.RequestBuilder.options
-import java.nio.file.Files.list
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) {
+fun UpdateClassScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    classId: String? = null
+) {
     var day_of_week by remember { mutableStateOf("") }
     var time_of_course by remember { mutableStateOf("") }
     var capacity by remember { mutableStateOf("") }
@@ -62,16 +59,32 @@ fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) 
     var type_of_class by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var teacher by remember { mutableStateOf("") }
+    var id by remember { mutableStateOf("") }
     var context = LocalContext.current
 
     // State for date picker
     var showDatePicker by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf("") }
 
-    val options = listOf("Food", "Bill Payment", "Recharges", "Outing", "Other")
-
-    var expanded by remember { mutableStateOf(false) }
-    var selectedOptionText by remember { mutableStateOf(options[0]) }
+    // Load class data if classId is provided
+    LaunchedEffect(key1 = classId) {
+        if (classId != null) {
+            classFirebaseRepository.getClassById(classId) { classData ->
+                if (classData != null) {
+                    // Set values from the database
+                    id = classData.id ?: ""
+                    day_of_week = classData.day_of_week
+                    time_of_course = classData.time_of_course
+                    capacity = classData.capacity
+                    duration = classData.duration
+                    price_per_class = classData.price_per_class
+                    type_of_class = classData.type_of_class
+                    description = classData.description
+                    teacher = classData.teacher
+                }
+            }
+        }
+    }
 
     // Show date picker dialog when state is true
     WheelDateTimePickerDialog(
@@ -90,7 +103,7 @@ fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) 
             TopAppBar(
                 title = {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text("Add Class")
+                        Text(if (classId != null) "Update Class" else "Add Class")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -175,10 +188,12 @@ fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) 
 
             Spacer(Modifier.height(12.dp))
 
-            ClassTypeDropdown(
-                selectedType = type_of_class,
-                onTypeSelected = { type_of_class = it },
-                modifier = Modifier.fillMaxWidth()
+            OutlinedTextField(
+                value = teacher,
+                onValueChange = { teacher = it },
+                label = { Text("Teacher") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(Modifier.height(12.dp))
@@ -200,7 +215,7 @@ fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) 
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, Color.Black),
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
                     contentColor = Color.Black
                 )
@@ -210,14 +225,27 @@ fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) 
 
             Button(
                 onClick = {
-                    classFirebaseRepository.addClass(classModel("", day_of_week, time_of_course, capacity, duration, price_per_class, type_of_class, description, teacher))
+                    if (classId != null) {
+                        // Update existing class
+                        classFirebaseRepository.updateClass(
+                            classModel(id, day_of_week, time_of_course, capacity, duration,
+                                price_per_class, type_of_class, description, teacher)
+                        )
+                        Toast.makeText(context, "Class updated successfully", Toast.LENGTH_SHORT).show()
+                    } else {
+                        // Add new class
+                        classFirebaseRepository.addClass(
+                            classModel("", day_of_week, time_of_course, capacity, duration,
+                                price_per_class, type_of_class, description, teacher)
+                        )
+                        Toast.makeText(context, "Class added successfully", Toast.LENGTH_SHORT).show()
+                    }
                     navController.popBackStack()
-                    Toast.makeText(context, "Class added successfully", Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Save Class")
+                Text(if (classId != null) "Update Class" else "Save Class")
             }
         }
     }
