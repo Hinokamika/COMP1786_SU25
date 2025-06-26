@@ -64,4 +64,5 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation ("androidx.compose.runtime:runtime-livedata:1.8.2")
     implementation ("network.chaintech:kmp-date-time-picker:1.0.5")
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0")
 }

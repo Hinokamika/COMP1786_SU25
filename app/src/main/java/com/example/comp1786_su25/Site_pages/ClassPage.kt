@@ -14,12 +14,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -37,10 +39,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.comp1786_su25.AuthViewModel
 import com.example.comp1786_su25.controllers.classFirebaseRepository
 import com.example.comp1786_su25.controllers.teacherFirebaseRepository
 import com.example.comp1786_su25.dataClasses.classModel
 import com.example.comp1786_su25.functionPages.Class.ClassDetailsDialog
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,11 +55,16 @@ fun ClassPage(modifier: Modifier = Modifier, navController: NavController) {
     // State for search query
     var searchQuery by remember { mutableStateOf("") }
     var teacherNames by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    // State for refresh indicator
+    var isRefreshing by remember { mutableStateOf(false) }
 
-    // Fetch classes from Firebase when the composable is first displayed
-    LaunchedEffect(key1 = true) {
+    // Function to refresh data
+    fun refreshData() {
+        isRefreshing = true
         classFirebaseRepository.getClasses { fetchedClasses ->
             classes = fetchedClasses
+            // Reset teacher names map before fetching new data
+            teacherNames = emptyMap()
             // Fetch teacher names for all unique teacher IDs in the class list
             val uniqueTeacherIds = fetchedClasses.map { it.teacher }.toSet()
             uniqueTeacherIds.forEach { teacherId ->
@@ -64,7 +74,13 @@ fun ClassPage(modifier: Modifier = Modifier, navController: NavController) {
                     }
                 }
             }
+            isRefreshing = false
         }
+    }
+
+    // Fetch classes from Firebase when the composable is first displayed
+    LaunchedEffect(key1 = true) {
+        refreshData()
     }
 
     // Filter classes based on search query
@@ -83,15 +99,34 @@ fun ClassPage(modifier: Modifier = Modifier, navController: NavController) {
             TopAppBar(
                 title = {
                     Text(
-                        text = "My Classes",
+                        text = "Classes",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
                 },
+                actions = {
+                    // Logout button
+                    IconButton(onClick = {
+                        // Sign out using the AuthViewModel and navigate to intro screen
+                        val authViewModel = AuthViewModel()
+                        authViewModel.logout()
+                        navController.navigate("intro") {
+                            // Clear the back stack so user can't navigate back after logout
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.ExitToApp,
+                            contentDescription = "Logout",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 )
+
             )
         },
         modifier = Modifier.fillMaxSize(),
@@ -138,41 +173,48 @@ fun ClassPage(modifier: Modifier = Modifier, navController: NavController) {
                     shape = MaterialTheme.shapes.medium
                 )
 
-                // Display classes from Firebase
-                if (filteredClasses.isEmpty()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = if (classes.isEmpty())
-                                "No classes found"
-                            else
-                                "No classes match your search",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        if (classes.isEmpty()) {
+                // Wrap content in SwipeRefresh
+                SwipeRefresh(
+                    state = rememberSwipeRefreshState(isRefreshing),
+                    onRefresh = { refreshData() },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // Display classes from Firebase
+                    if (filteredClasses.isEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                        ) {
                             Text(
-                                text = "Add a class using the + button",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.secondary,
-                                modifier = Modifier.padding(top = 8.dp)
+                                text = if (classes.isEmpty())
+                                    "No classes found"
+                                else
+                                    "No classes match your search",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+
+                            if (classes.isEmpty()) {
+                                Text(
+                                    text = "Add a class using the + button",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
                         }
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(filteredClasses) { classData ->
-                            ClassCard(classData = classData, navController = navController, teacherNames = teacherNames)
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(bottom = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(filteredClasses) { classData ->
+                                ClassCard(classData = classData, navController = navController, teacherNames = teacherNames)
+                            }
                         }
                     }
                 }
@@ -191,7 +233,8 @@ fun ClassCard(classData: classModel, navController: NavController, teacherNames:
         ClassDetailsDialog(
             classData = classData,
             onDismiss = { showDetailsDialog = false },
-            navController = navController
+            navController = navController,
+            teacherName = teacherNames[classData.teacher]
         )
     }
 

@@ -24,7 +24,12 @@ import com.example.comp1786_su25.components.DetailSection
 import com.example.comp1786_su25.controllers.classFirebaseRepository
 
 @Composable
-fun ClassDetailsDialog(classData: classModel, onDismiss: () -> Unit, navController: NavController) {
+fun ClassDetailsDialog(
+    classData: classModel,
+    onDismiss: () -> Unit,
+    navController: NavController,
+    teacherName: String? = null
+) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -83,7 +88,7 @@ fun ClassDetailsDialog(classData: classModel, onDismiss: () -> Unit, navControll
                 DetailSection(title = "Instructor", content = {
                     DetailItem(
                         label = "Teacher",
-                        value = classData.teacher,
+                        value = teacherName ?: classData.teacher,
                         modifier = Modifier.fillMaxWidth()
                     )
                 })
@@ -133,4 +138,3 @@ fun ClassDetailsDialog(classData: classModel, onDismiss: () -> Unit, navControll
         }
     }
 }
-

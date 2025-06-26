@@ -11,6 +11,8 @@ import com.example.comp1786_su25.functionPages.Class.AddClassScreen
 import com.example.comp1786_su25.functionPages.Class.UpdateClassScreen
 import com.example.comp1786_su25.functionPages.Teacher.AddTeacherScreen
 import com.example.comp1786_su25.functionPages.Teacher.UpdateTeacherScreen
+import com.example.comp1786_su25.functionPages.User.AddUserScreen
+import com.example.comp1786_su25.functionPages.User.UpdateUserScreen
 import com.example.comp1786_su25.pages.HomePage
 import com.example.comp1786_su25.pages.IntroPage
 import com.example.comp1786_su25.pages.LoginPage
@@ -56,6 +58,18 @@ fun MyAppNavigation(modifier: Modifier = Modifier, authViewModel: AuthViewModel)
         ) { backStackEntry ->
             val teacherId = backStackEntry.arguments?.getString("teacherId")
             UpdateTeacherScreen( navController, teacherId)
+        }
+        composable("adduser") {
+            AddUserScreen(modifier, navController) // Uncomment when AddUserScreen is implemented
+        }
+        composable(
+            route = "updateuser/{userId}",
+            arguments = listOf(
+                navArgument("userId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId")
+            UpdateUserScreen(modifier ,navController, userId)
         }
     }
 }
