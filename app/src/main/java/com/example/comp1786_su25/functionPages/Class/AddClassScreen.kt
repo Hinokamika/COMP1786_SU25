@@ -56,10 +56,22 @@ fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) 
     var type_of_class by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var teacher by remember { mutableStateOf("") }
+
+    // Error state variables
+    var timeError by remember { mutableStateOf(false) }
+    var capacityError by remember { mutableStateOf(false) }
+    var durationError by remember { mutableStateOf(false) }
+    var priceError by remember { mutableStateOf(false) }
+
     var context = LocalContext.current
 
     // State for date picker
     var showDatePicker by remember { mutableStateOf(false) }
+
+    // Validation functions
+    fun isInteger(str: String): Boolean {
+        return str.toIntOrNull() != null
+    }
 
     // Show date picker dialog when state is true
     WheelDateTimePickerDialog(
@@ -130,37 +142,101 @@ fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) 
 
             OutlinedTextField(
                 value = time_of_course,
-                onValueChange = { time_of_course = it },
+                onValueChange = {
+                    if (it.isEmpty() || isInteger(it)) {
+                        time_of_course = it
+                        timeError = false
+                    } else {
+                        timeError = true
+                    }
+                },
                 label = { Text("Time of Course") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                isError = timeError,
+                supportingText = {
+                    if (timeError) {
+                        Text(
+                            text = "Please enter an integer value",
+                            color = Color.Red
+                        )
+                    }
+                }
             )
             Spacer(Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = capacity,
-                onValueChange = { capacity = it },
+                onValueChange = {
+                    if (it.isEmpty() || isInteger(it)) {
+                        capacity = it
+                        capacityError = false
+                    } else {
+                        capacityError = true
+                    }
+                },
                 label = { Text("Capacity") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                isError = capacityError,
+                supportingText = {
+                    if (capacityError) {
+                        Text(
+                            text = "Please enter an integer value",
+                            color = Color.Red
+                        )
+                    }
+                }
             )
             Spacer(Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = duration,
-                onValueChange = { duration = it },
+                onValueChange = {
+                    if (it.isEmpty() || isInteger(it)) {
+                        duration = it
+                        durationError = false
+                    } else {
+                        durationError = true
+                    }
+                },
                 label = { Text("Duration") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                isError = durationError,
+                supportingText = {
+                    if (durationError) {
+                        Text(
+                            text = "Please enter an integer value",
+                            color = Color.Red
+                        )
+                    }
+                }
             )
             Spacer(Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = price_per_class,
-                onValueChange = { price_per_class = it },
+                onValueChange = {
+                    if (it.isEmpty() || isInteger(it)) {
+                        price_per_class = it
+                        priceError = false
+                    } else {
+                        priceError = true
+                    }
+                },
                 label = { Text("Price per Class") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                isError = priceError,
+                supportingText = {
+                    if (priceError) {
+                        Text(
+                            text = "Please enter an integer value",
+                            color = Color.Red
+                        )
+                    }
+                }
             )
             Spacer(Modifier.height(12.dp))
 
@@ -207,12 +283,18 @@ fun AddClassScreen(modifier: Modifier = Modifier, navController: NavController) 
 
             Button(
                 onClick = {
-                    classFirebaseRepository.addClass(classModel("",class_name, day_of_week, time_of_course, capacity, duration, price_per_class, type_of_class, description, teacher))
-                    navController.popBackStack()
-                    Toast.makeText(context, "Class added successfully", Toast.LENGTH_SHORT).show()
+                    // Check if any errors exist before saving
+                    if (!timeError && !capacityError && !durationError && !priceError) {
+                        classFirebaseRepository.addClass(classModel("", class_name, day_of_week, time_of_course, capacity, duration, price_per_class, type_of_class, description, teacher))
+                        navController.popBackStack()
+                        Toast.makeText(context, "Class added successfully", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "Please fix the errors before saving", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                enabled = !timeError && !capacityError && !durationError && !priceError
             ) {
                 Text("Save Class")
             }
