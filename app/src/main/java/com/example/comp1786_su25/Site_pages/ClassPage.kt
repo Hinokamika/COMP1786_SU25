@@ -341,7 +341,7 @@ fun ClassCard(classData: classModel, navController: NavController, teacherNames:
                         color = MaterialTheme.colorScheme.secondary
                     )
                     Text(
-                        text = teacherNames[classData.teacher] ?: classData.teacher,
+                        text = teacherNames[classData.teacher] ?: "Unknown Teacher",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )

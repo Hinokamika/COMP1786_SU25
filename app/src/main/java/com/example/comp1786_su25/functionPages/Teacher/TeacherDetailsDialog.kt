@@ -144,7 +144,7 @@ fun TeacherDetailsDialog(
                         .fillMaxWidth()
                         .padding(top = 16.dp)
                 ) {
-                    Text("Update Class")
+                    Text("Update Teacher")
                 }
 
                 Button(onClick = {
@@ -161,7 +161,7 @@ fun TeacherDetailsDialog(
                         .fillMaxWidth()
                         .padding(top = 8.dp)
                 ) {
-                    Text("Delete Class")
+                    Text("Delete Teacher")
                 }
 
                 // Close button
